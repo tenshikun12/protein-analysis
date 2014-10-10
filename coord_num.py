@@ -22,7 +22,7 @@ from protein import Protein
 #from atom import Atom
 import surface
 
-bond_type = {\
+BOND_TYPE = {\
     1: {1: 'HB', 2: 'HB', 3: 'HB', 4: 'HH', 5: 'O', 6: 'O', 7: 'O', 8: 'O'}, \
     2: {1: 'HB', 2: 'AA', 3: 'HB', 4: 'HH', 5: 'O', 6: 'O', 7: 'O', 8: 'O'}, \
     3: {1: 'HB', 2: 'HB', 3: 'DD', 4: 'HH', 5: 'O', 6: 'O', 7: 'O', 8: 'O'}, \
