@@ -20,6 +20,10 @@ along with protein-analysis.  If not, see <http://www.gnu.org/licenses/>.
 from atom import Atom
 from residue import Residue
 
+AMINO_ACID_NAMES = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLU', \
+        'GLN', 'GLY', 'HIS', 'ILE', 'LEU', 'LYS', 'MET', \
+        'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL']
+
 class Protein(list):
     '''
     Changes list class so that residues can be selected as in most other programs (start with 1, end with len(protein)
@@ -183,39 +187,38 @@ class Protein(list):
         '''
         Protein class constructor
         Receives the file from which it is to be read. It needs to be in pdb or gro formats.
+        Proteins must be ungapped (all resiude numbers must be consecutive).
+        Only standard residues are considered.
         '''
         super(Protein, self).__init__()
         ext = file_name.split('.')[-1].lower()
         if ext == 'pdb':
-            with open(file_name, 'r') as read_file:
-                file_content = read_file.read().split('\n')
-            for whole_line in file_content:
-                line = whole_line.split()
-                if line[0] in ['TER', 'END']:
+            with open(fileName,'r') as f:
+                fileContent=f.read().split('\n')
+            for line in fileContent:
+                if line[0:6] in ['TER   ','END   ']:
                     return None
-                elif line[0] == 'ATOM':
-                    index = int(line[1])
-                    name = line[2]
-                    res_name = line[3]
-                    if res_name in ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLU', \
-                            'GLN', 'GLY', 'HIS', 'ILE', 'LEU', 'LYS', 'MET', \
-                            'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL']:
+                elif line[0:6]=='ATOM  ':
+                    index = int(line[6:11])
+                    name = line[12:16].strip()
+                    resName = line[17:20].strip()
+                    if res_name in ['HIP', 'HIE', 'HID']:
+                        res_name = 'HIS'
+                    assert res_name in AMINO_ACID_NAMES, \
+                            "Only standard residues are considered."
+                    resId = int(line[22:26])
+                    x = float(line[30:38])
+                    y = float(line[38:46])
+                    z = float(line[46:54])
+                    if resId > 0:
                         try:
-                            res_id = int(line[5])
-                            pos_x = float(line[6])
-                            pos_y = float(line[7])
-                            pos_z = float(line[8])
-                        except ValueError: # if the pdb has no chain
-                            res_id = int(line[4])
-                            pos_x = float(line[5])
-                            pos_y = float(line[6])
-                            pos_z = float(line[7])
-                        try:
-                            self.add_residue(Residue(res_id, res_name))
+                            self.addResidue(Residue(resId,resName))
                         except AssertionError:
                             pass
-                        self.add_atom(Atom(index, name, (pos_x, pos_y, pos_z)), \
-                                res_id)
+                        self.addAtom(Atom(index,name,x,y,z),resId)
+            q = [x for x in self if x != None]
+            assert None not in self[self.index(q[0]):self.index(q[-1])+1], \
+                    "Protein contains gaps."
         elif ext == 'gro':
             with open(file_name, 'r') as read_file:
                 file_content = read_file.read().split('\n')
